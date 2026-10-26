@@ -64,6 +64,9 @@ export function authError(e: unknown): string {
   if (/already registered/i.test(m)) return 'Ese correo ya tiene cuenta. Inicia sesión.';
   if (/password should be at least/i.test(m)) return 'La contraseña debe tener al menos 6 caracteres.';
   if (/rate limit/i.test(m)) return 'Demasiados intentos. Espera un minuto y vuelve a intentar.';
+  const wait = m.match(/after (\d+) seconds?/i);
+  if (wait) return `Ya te enviamos un correo. Revisa tu bandeja (y spam) o espera ${wait[1]} segundos para pedir otro.`;
+  if (/provider is not enabled/i.test(m)) return 'El inicio con Google aún no está activado. Entra con tu correo.';
   if (/fetch|network/i.test(m)) return 'Sin conexión. Revisa tu internet.';
   return m;
 }

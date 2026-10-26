@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { authError, resetPassword, signInEmail, signInGoogle, signUpEmail } from '../lib/auth';
+import { googleLogin } from '../lib/supabase';
 
 type Modo = 'entrar' | 'crear';
 
@@ -42,6 +43,7 @@ export default function Login() {
         <p className="meta">Tu rutina, tus pesos y tu progreso, en el gym y sin conexión.</p>
       </div>
 
+      {googleLogin && (
       <div className="stack mt">
         <button className="btn block" disabled={busy} onClick={() => void run(signInGoogle)}>
           <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
@@ -54,8 +56,9 @@ export default function Login() {
         </button>
         <p className="meta center">o con tu correo</p>
       </div>
+      )}
 
-      <form className="panel stack" onSubmit={submit}>
+      <form className="panel stack" style={{ marginTop: googleLogin ? 0 : 20 }} onSubmit={submit}>
         <div className="tabs" role="tablist">
           <button type="button" role="tab" aria-selected={modo === 'entrar'} className={`tab ${modo === 'entrar' ? 'on' : ''}`} onClick={() => setModo('entrar')}>
             Iniciar sesión

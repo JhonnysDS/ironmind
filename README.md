@@ -32,7 +32,8 @@ npm run build
 
 ### 2. Vercel
 1. Importa este repositorio en https://vercel.com (framework: Vite).
-2. Variables de entorno: `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY`.
+2. Variables de entorno: `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` (la *publishable key*, nunca la secret).
+   Cuando actives Google en Supabase, agrega `VITE_GOOGLE_LOGIN=true` y vuelve a desplegar.
 3. `vercel.json` ya está incluido: redirige las rutas de la app a `index.html`.
 
 ### 3. Instalar en Android

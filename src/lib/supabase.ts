@@ -8,3 +8,6 @@ export const supabase: SupabaseClient | null =
   url && key ? createClient(url, key, { auth: { persistSession: true, autoRefreshToken: true } }) : null;
 
 export const modoLocal = !supabase;
+
+/** El botón de Google solo aparece si se activa en Supabase y se pone VITE_GOOGLE_LOGIN=true. */
+export const googleLogin = import.meta.env.VITE_GOOGLE_LOGIN === 'true';
