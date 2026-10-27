@@ -11,6 +11,7 @@ import { onSyncStatus, syncNow, type SyncStatus } from '../lib/sync';
 import { exportData, importData } from '../lib/transfer';
 import { modoLocal } from '../lib/supabase';
 import type { Prefs } from '../lib/types';
+import { useTheme, type Theme } from '../lib/theme';
 
 const SYNC_TXT: Record<SyncStatus, string> = {
   local: 'Modo local: los datos solo están en este dispositivo.',
@@ -22,6 +23,7 @@ const SYNC_TXT: Record<SyncStatus, string> = {
 
 export default function Settings() {
   const prefs = usePrefs();
+  const [theme, setTheme] = useTheme();
   const toast = useToast();
   const { user } = useAuth();
   const [sync, setSync] = useState<{ s: SyncStatus; d?: string }>({ s: 'local' });
@@ -82,6 +84,18 @@ export default function Settings() {
       <Header>
         <HomeTabs />
       </Header>
+
+      <section className="mt">
+        <p className="eyebrow" id="tema-lbl">Apariencia</p>
+        <div className="seg" role="radiogroup" aria-labelledby="tema-lbl" style={{ marginTop: 8 }}>
+          {([['system', 'Sistema'], ['light', 'Claro'], ['dark', 'Oscuro']] as [Theme, string][]).map(([v, t]) => (
+            <button key={v} role="radio" aria-checked={theme === v} className={theme === v ? 'on' : ''} onClick={() => setTheme(v)}>
+              {t}
+            </button>
+          ))}
+        </div>
+        <p className="meta" style={{ marginTop: 6 }}>"Sistema" sigue el modo de tu celular. Se guarda en este dispositivo.</p>
+      </section>
 
       <section className="mt">
         <p className="eyebrow">Rutina</p>

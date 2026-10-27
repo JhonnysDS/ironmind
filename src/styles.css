@@ -8,14 +8,22 @@
   --body: "Barlow", system-ui, -apple-system, "Segoe UI", sans-serif;
   color-scheme: dark;
 }
+/* Tema: oscuro por defecto; claro si el sistema lo pide (modo "Sistema") o si se elige en Ajustes. */
 @media (prefers-color-scheme: light) {
-  :root {
+  :root:not([data-theme="dark"]) {
     --bg: #eceef1; --surface: #ffffff; --surface2: #f3f4f6; --line: #d8dbe0;
     --fg: #16171a; --muted: #5d6068; --accent: #c4262c; --accent-fg: #fff;
     --up: #1f8346; --hold: #9c6600; --down: #bf3a1b;
     --up-bg: rgba(31, 131, 70, .11); --hold-bg: rgba(156, 102, 0, .11); --down-bg: rgba(191, 58, 27, .11);
     color-scheme: light;
   }
+}
+:root[data-theme="light"] {
+  --bg: #eceef1; --surface: #ffffff; --surface2: #f3f4f6; --line: #d8dbe0;
+  --fg: #16171a; --muted: #5d6068; --accent: #c4262c; --accent-fg: #fff;
+  --up: #1f8346; --hold: #9c6600; --down: #bf3a1b;
+  --up-bg: rgba(31, 131, 70, .11); --hold-bg: rgba(156, 102, 0, .11); --down-bg: rgba(191, 58, 27, .11);
+  color-scheme: light;
 }
 
 * { box-sizing: border-box; }
@@ -40,6 +48,9 @@ h1, h2, h3 { font-family: var(--display); font-weight: 700; letter-spacing: .01e
 .tabs { display: flex; gap: 6px; }
 .tab { border: 1px solid var(--line); background: none; border-radius: 999px; padding: 5px 12px; font-size: 14px; color: var(--muted); text-decoration: none; display: inline-grid; place-items: center; }
 .tab.on { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.seg { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; padding: 4px; background: var(--surface2); border: 1px solid var(--line); border-radius: 12px; }
+.seg button { border: 0; background: none; border-radius: 9px; padding: 10px 6px; font-weight: 600; font-size: 15px; color: var(--muted); }
+.seg button.on { background: var(--surface); color: var(--fg); box-shadow: 0 1px 3px rgba(0, 0, 0, .25); }
 .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); display: inline-block; }
 .dot.ok { background: var(--up); } .dot.syncing { background: var(--hold); } .dot.error { background: var(--down); }
 

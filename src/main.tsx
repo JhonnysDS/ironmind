@@ -5,9 +5,11 @@ import { registerSW } from 'virtual:pwa-register';
 import App from './App';
 import { AuthProvider } from './lib/auth';
 import { ToastProvider } from './components/Toast';
+import { initTheme } from './lib/theme';
 import './styles.css';
 
 registerSW({ immediate: true });
+initTheme();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
