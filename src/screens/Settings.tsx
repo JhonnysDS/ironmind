@@ -12,6 +12,7 @@ import { exportData, importData } from '../lib/transfer';
 import { modoLocal } from '../lib/supabase';
 import type { Prefs } from '../lib/types';
 import { useTheme, type Theme } from '../lib/theme';
+import { disablePush, enablePush, scheduleRestAlarm, usePushState, type PushState } from '../lib/push';
 
 const SYNC_TXT: Record<SyncStatus, string> = {
   local: 'Modo local: los datos solo están en este dispositivo.',
@@ -24,10 +25,19 @@ const SYNC_TXT: Record<SyncStatus, string> = {
 export default function Settings() {
   const prefs = usePrefs();
   const [theme, setTheme] = useTheme();
+  const [push, refreshPush] = usePushState();
+  const [pushBusy, setPushBusy] = useState(false);
   const toast = useToast();
   const { user } = useAuth();
   const [sync, setSync] = useState<{ s: SyncStatus; d?: string }>({ s: 'local' });
   useEffect(() => onSyncStatus((s, d) => setSync({ s, d })), []);
+  // Con la app en pantalla, el service worker no muestra la notificación y avisa aquí.
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) return;
+    const on = (e: MessageEvent) => e.data?.type === 'rest-push' && toast('Notificación recibida ✓ Con la app abierta no se muestra en el panel.');
+    navigator.serviceWorker.addEventListener('message', on);
+    return () => navigator.serviceWorker.removeEventListener('message', on);
+  }, [toast]);
 
   const save = (p: Partial<Prefs>) => void setKV('prefs', { ...prefs, ...p });
 
@@ -68,6 +78,37 @@ export default function Settings() {
       toast(e instanceof SyntaxError ? 'El archivo no es un JSON válido.' : e instanceof Error ? e.message : String(e));
     }
   }
+
+  async function togglePush() {
+    setPushBusy(true);
+    try {
+      if (push === 'on') {
+        await disablePush();
+        toast('Notificaciones desactivadas en este celular.');
+      } else {
+        await enablePush();
+        toast('Notificaciones activadas.');
+      }
+    } catch (e) {
+      toast(e instanceof Error ? e.message : String(e));
+    } finally {
+      await refreshPush();
+      setPushBusy(false);
+    }
+  }
+
+  function probarPush() {
+    scheduleRestAlarm(Date.now() + 10_000, '¡A la siguiente serie!', 'Notificación de prueba de IronMind', '/ajustes');
+    toast('Llegará en unos 10 segundos. Bloquea la pantalla para verla en el panel.');
+  }
+
+  const PUSH_TXT: Record<PushState, string> = {
+    unsupported: 'Este navegador no permite notificaciones. En Android usa Chrome e instala la app.',
+    unconfigured: 'Falta configurar las notificaciones en el servidor (ver README).',
+    denied: 'Bloqueaste las notificaciones. Actívalas en Ajustes de Android → Apps → IronMind (o Chrome) → Notificaciones, y vuelve aquí.',
+    off: 'Recibe un aviso al terminar el descanso aunque la app esté cerrada o la pantalla apagada.',
+    on: 'Activadas en este celular. Necesitas internet al marcar la serie para que se programe el aviso.',
+  };
 
   const sw = (on: boolean, title: string, sub: string, onClick: () => void) => (
     <button className="day" role="switch" aria-checked={on} onClick={onClick}>
@@ -140,7 +181,31 @@ export default function Settings() {
             Probar descanso de 5 s
           </button>
         </div>
-        <p className="meta mt">El sonido usa el volumen multimedia del celular. Con la app cerrada no puede sonar; eso llega con la versión de Android.</p>
+        <p className="meta mt">El sonido usa el volumen multimedia del celular. Con la app cerrada, el aviso llega como notificación si la activas abajo.</p>
+      </section>
+
+      <section className="mt">
+        <p className="eyebrow">Notificaciones del descanso</p>
+        <div className="panel" style={{ marginTop: 8 }}>
+          <p>{push ? PUSH_TXT[push] : 'Revisando…'}</p>
+          <div className="row">
+            {(push === 'off' || push === 'on') && (
+              <button className={`btn small ${push === 'off' ? 'pri' : ''}`} disabled={pushBusy} onClick={() => void togglePush()}>
+                {pushBusy ? 'Un momento…' : push === 'on' ? 'Desactivar' : 'Activar notificaciones'}
+              </button>
+            )}
+            {push === 'on' && (
+              <button className="btn small" onClick={probarPush}>
+                Enviar prueba
+              </button>
+            )}
+            {push === 'denied' && (
+              <button className="btn small" onClick={() => void refreshPush()}>
+                Ya las activé
+              </button>
+            )}
+          </div>
+        </div>
       </section>
 
       <section className="mt">

@@ -42,6 +42,32 @@ Abre la URL en Chrome → menú ⋮ → **Instalar app**.
 ### 4. Traer el historial
 En la primera pantalla elige **Importar mi historial** y selecciona `ironmind-historial.json`.
 
+## Notificaciones del descanso (Web Push)
+
+Al marcar una serie, la app guarda en `rest_alarms` la hora en que termina el descanso. `pg_cron` revisa cada 5 s y,
+solo si hay avisos vencidos, llama a la Edge Function `send-rest-alarms`, que envía la notificación. Llega aunque la app
+esté cerrada o la pantalla apagada (con hasta ~5 s de retraso; requiere internet al marcar la serie).
+
+Configuración, una sola vez:
+
+1. **Claves VAPID** en tu computador: `npx web-push generate-vapid-keys`. La pública va en Vercel; la privada, solo en Supabase.
+2. **Secretos de Vault** (Supabase → SQL Editor), cambiando `TU-PROYECTO` por el id de tu proyecto:
+   ```sql
+   select vault.create_secret('https://TU-PROYECTO.supabase.co/functions/v1/send-rest-alarms', 'rest_push_url');
+   select vault.create_secret(encode(extensions.gen_random_bytes(32), 'hex'), 'rest_push_secret');
+   ```
+3. **SQL Editor** → ejecuta `supabase/migrations/0002_rest_push.sql` (activa `pg_cron` y `pg_net`, crea las tablas y la tarea).
+4. **Edge Functions → Deploy a new function → Via Editor**: nombre `send-rest-alarms`, pega
+   `supabase/functions/send-rest-alarms/index.ts` y despliega. En los detalles de la función, **desactiva "Verify JWT"**
+   (la llamada se autentica con el secreto de Vault).
+   Con la CLI: `npx supabase functions deploy send-rest-alarms --no-verify-jwt`.
+5. **Edge Functions → Secrets**: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` y `VAPID_SUBJECT` (p. ej. `mailto:tu-correo@gmail.com`).
+6. **Vercel → Environment Variables**: `VITE_VAPID_PUBLIC_KEY` = la clave pública, y vuelve a desplegar.
+7. En la app: **Ajustes → Notificaciones del descanso → Activar** y luego **Enviar prueba** con la pantalla bloqueada.
+
+Si no llega: Supabase → Edge Functions → `send-rest-alarms` → Logs, y en SQL
+`select * from cron.job_run_details order by start_time desc limit 5;`.
+
 ## Estructura
 
 ```
@@ -51,6 +77,9 @@ src/lib/db.ts            IndexedDB + cola de cambios pendientes
 src/lib/sync.ts          Subida de la cola y descarga incremental (cursor `synced_at` del servidor)
 src/lib/session.ts       Borrador de sesión y cierre con cálculo del siguiente peso
 src/lib/timer.ts         Temporizador que sobrevive a que Android cierre la app
+src/lib/push.ts          Activar notificaciones y programar/cancelar el aviso del descanso
+public/push-sw.js        Recibe la notificación en el service worker
+supabase/functions/      Edge Function que envía los avisos vencidos
 src/screens/             Pantallas
 supabase/migrations/     Esquema con Row Level Security
 ```
@@ -66,4 +95,4 @@ local aún sin subir nunca se pisa. Los borrados son lógicos (`deleted = true`)
 
 2. Pesos disponibles en el gym, detector de estancamiento, gráficas y récords.
 3. Checklist de alimentación, peso y cintura, fotos de progreso.
-4. App Android con Capacitor: notificación con el cronómetro en vivo y alarma con la app cerrada.
+4. App Android con Capacitor: cronómetro en vivo en el panel de notificaciones.

@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react';
+import { cancelRestAlarm, scheduleRestAlarm } from './push';
 
 /** Temporizador de descanso. Se guarda la hora de fin, así sobrevive a que el sistema cierre la app. */
 export interface RestTimer {
   end: number;
   total: number;
   nombre: string;
+  /** Pantalla que abre la notificación. */
+  url?: string;
 }
 
 const KEY = 'im_timer';
@@ -33,11 +36,25 @@ function write(t: RestTimer | null) {
   listeners.forEach((l) => l(t));
 }
 
-export const startRest = (segundos: number, nombre: string) =>
-  write({ end: Date.now() + segundos * 1000, total: segundos, nombre });
-export const addRest = (segundos: number) =>
-  current && write({ ...current, end: current.end + segundos * 1000, total: current.total + segundos });
-export const stopRest = () => write(null);
+const avisar = (t: RestTimer) => scheduleRestAlarm(t.end, '¡A la siguiente serie!', `Terminó el descanso · ${t.nombre}`, t.url ?? '/');
+
+export function startRest(segundos: number, nombre: string, url?: string) {
+  const t = { end: Date.now() + segundos * 1000, total: segundos, nombre, url };
+  write(t);
+  avisar(t);
+}
+
+export function addRest(segundos: number) {
+  if (!current) return;
+  const t = { ...current, end: current.end + segundos * 1000, total: current.total + segundos };
+  write(t);
+  avisar(t);
+}
+
+export function stopRest() {
+  if (current && current.end > Date.now()) cancelRestAlarm();
+  write(null);
+}
 
 export function useRestTimer(): RestTimer | null {
   const [t, setT] = useState(current);
