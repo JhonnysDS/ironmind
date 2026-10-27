@@ -166,7 +166,7 @@ export default function SessionScreen() {
               const it = d.items[ex.id];
               const marking = !it.hecho[i];
               setItem(ex.id, (x) => ({ ...x, hecho: x.hecho.map((h, k) => (k === i ? !h : h)), toc: x.toc.map((t, k) => (k === i ? true : t)) }));
-              if (marking && ex.tipo !== 'cardio' && ex.descanso) startRest(ex.descanso, ex.nombre);
+              if (marking && ex.tipo !== 'cardio' && ex.descanso) startRest(ex.descanso, ex.nombre, `/sesion/${dia}`);
             }}
             onDemo={() => setDemo(ex)}
           />

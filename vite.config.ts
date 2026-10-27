@@ -7,7 +7,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icons/icon.svg'],
+      includeAssets: ['icons/icon.svg', 'icons/badge-96.png', 'push-sw.js'],
       manifest: {
         name: 'IronMind',
         short_name: 'IronMind',
@@ -25,6 +25,8 @@ export default defineConfig({
         ]
       },
       workbox: {
+        // Recibe las notificaciones de fin de descanso (public/push-sw.js).
+        importScripts: ['push-sw.js'],
         navigateFallback: '/index.html',
         runtimeCaching: [
           {
